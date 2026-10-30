@@ -1,13 +1,48 @@
 agents:
   queue: hosted-large
 
+# Compare on fresh agents with Git mirrors disabled and the plugin cache warm.
 steps:
-  - label: ":git: Without plugin — normal checkout"
+  - label: ":git: Full clone — agent defaults"
     key: without-snapshot
     command: git rev-parse HEAD
     timeout_in_minutes: 30
 
-  - label: ":zap: With git-snapshot — snapshot + patch"
+  - label: ":git: Full clone — 8 checkout workers"
+    key: full-parallel
+    command: git rev-parse HEAD
+    timeout_in_minutes: 30
+    env:
+      BUILDKITE_GIT_CLONE_FLAGS: "-v --config checkout.workers=8"
+      BUILDKITE_GIT_FETCH_FLAGS: "-v --prune"
+
+  - label: ":git: Blobless clone — 8 checkout workers"
+    key: blobless
+    command: git rev-parse HEAD
+    timeout_in_minutes: 30
+    env:
+      BUILDKITE_GIT_CLONE_FLAGS: "-v --filter=blob:none --config checkout.workers=8"
+      BUILDKITE_GIT_FETCH_FLAGS: "-v --prune --filter=blob:none"
+
+  # Treeless keeps commit history, but path history and blame can be slow.
+  - label: ":git: Treeless clone — 8 checkout workers"
+    key: treeless
+    command: git rev-parse HEAD
+    timeout_in_minutes: 30
+    env:
+      BUILDKITE_GIT_CLONE_FLAGS: "-v --filter=tree:0 --config checkout.workers=8"
+      BUILDKITE_GIT_FETCH_FLAGS: "-v --prune --filter=tree:0"
+
+  # Shallow history can break merge-base and other history-dependent jobs.
+  - label: ":git: Shallow clone (depth 1) — 8 checkout workers"
+    key: shallow
+    command: git rev-parse HEAD
+    timeout_in_minutes: 30
+    env:
+      BUILDKITE_GIT_CLONE_FLAGS: "-v --depth=1 --config checkout.workers=8"
+      BUILDKITE_GIT_FETCH_FLAGS: "-v --prune --depth=1"
+
+  - label: ":zap: Git-snapshot (snapshot + patch) — 8 checkout workers"
     key: with-snapshot
     parallelism: 2
     command: git rev-parse HEAD
