@@ -1,0 +1,16 @@
+agents:
+  queue: hosted-large
+
+steps:
+  - label: ":git: Without plugin — normal checkout"
+    key: without-snapshot
+    command: git rev-parse HEAD
+    timeout_in_minutes: 30
+
+  - label: ":zap: With git-snapshot — snapshot + patch"
+    key: with-snapshot
+    parallelism: 2
+    command: git rev-parse HEAD
+    timeout_in_minutes: 30
+    plugins:
+      - buildkite-playground/git-snapshot#main: {}
